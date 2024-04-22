@@ -23,6 +23,7 @@ import (
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/collector/internal/utils"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/collector/pipeline"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/collector/receiver"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 )
 
 const (
@@ -83,6 +84,7 @@ func (s HttpService) ExportEvent(w http.ResponseWriter, req *http.Request) {
 	if token == "" {
 		metricMonitor.IncDroppedCounter(define.RequestHttp, define.RecordFta)
 		receiver.WriteResponse(w, define.ContentTypeJson, http.StatusForbidden, errResponse(errors.New("empty token")))
+		logger.Warnf("no fta/token found, ip=%s", ip)
 		return
 	}
 
@@ -91,6 +93,7 @@ func (s HttpService) ExportEvent(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		metricMonitor.IncDroppedCounter(define.RequestHttp, define.RecordFta)
 		receiver.WriteResponse(w, define.ContentTypeJson, http.StatusBadRequest, errResponse(err))
+		logger.Errorf("failed to read request body, err: %v", err)
 		return
 	}
 
@@ -100,6 +103,7 @@ func (s HttpService) ExportEvent(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		metricMonitor.IncDroppedCounter(define.RequestHttp, define.RecordFta)
 		receiver.WriteResponse(w, define.ContentTypeJson, http.StatusBadRequest, errResponse(err))
+		logger.Errorf("failed to unmarshal request body, err: %v", err)
 		return
 	}
 
@@ -143,6 +147,7 @@ func (s HttpService) ExportEvent(w http.ResponseWriter, req *http.Request) {
 	code, processorName, err := s.Validate(r)
 	if err != nil {
 		err = errors.Wrapf(err, "run pre-check failed, rtype=fta, code=%d, ip=%s", code, ip)
+		logger.WarnRate(time.Minute, r.Token.Original, err)
 		metricMonitor.IncPreCheckFailedCounter(define.RequestHttp, define.RecordFta, processorName, r.Token.Original, code)
 		receiver.WriteResponse(w, define.ContentTypeJson, int(code), errResponse(err))
 		return

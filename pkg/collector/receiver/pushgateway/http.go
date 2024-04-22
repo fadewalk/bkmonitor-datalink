@@ -114,8 +114,7 @@ func (s HttpService) exportMetrics(w http.ResponseWriter, req *http.Request, job
 	var err error
 	if jobBase64Encoded {
 		if job, err = decodeBase64(job); err != nil {
-			err = errors.Wrapf(err, "invalid base64 encoding in job name, job: %s", job)
-			logger.Warn(err)
+			logger.Warnf("invalid base64 encoding in job name, job=%s, err: %v", job, err)
 			metricMonitor.IncDroppedCounter(define.RequestHttp, define.RecordPushGateway)
 			receiver.WriteResponse(w, define.ContentTypeJson, http.StatusBadRequest, errResponse(err))
 			return
@@ -133,8 +132,7 @@ func (s HttpService) exportMetrics(w http.ResponseWriter, req *http.Request, job
 	lbs := vars[fieldLabels]
 	labels, err := splitLabels(lbs)
 	if err != nil {
-		err = errors.Wrapf(err, "invalid labels field in request url: %s", lbs)
-		logger.Warn(err)
+		logger.Warnf("invalid labels field in request url=%s, err: %v", lbs, err)
 		metricMonitor.IncDroppedCounter(define.RequestHttp, define.RecordPushGateway)
 		receiver.WriteResponse(w, define.ContentTypeJson, http.StatusBadRequest, errResponse(err))
 		return
@@ -168,8 +166,7 @@ func (s HttpService) exportMetrics(w http.ResponseWriter, req *http.Request, job
 	}
 
 	if err != nil {
-		err = errors.Wrapf(err, "failed to parse body, ip=%v", ip)
-		logger.Warn(err)
+		logger.Warnf("failed to parse body, ip=%v, err: %v", ip, err)
 		metricMonitor.IncDroppedCounter(define.RequestHttp, define.RecordPushGateway)
 		receiver.WriteResponse(w, define.ContentTypeJson, http.StatusBadRequest, errResponse(err))
 		return

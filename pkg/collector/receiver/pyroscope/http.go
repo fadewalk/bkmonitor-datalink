@@ -80,8 +80,7 @@ func (s HttpService) ProfilesIngest(w http.ResponseWriter, req *http.Request) {
 	buf := &bytes.Buffer{}
 	if _, err := io.Copy(buf, req.Body); err != nil {
 		metricMonitor.IncDroppedCounter(define.RequestHttp, define.RecordProfiles)
-		err = errors.Wrap(err, "failed to read request body")
-		logger.Error(err)
+		logger.Errorf("failed to read request body, err: %v", err)
 		receiver.WriteErrResponse(w, define.ContentTypeJson, http.StatusBadRequest, err)
 		return
 	}
@@ -91,8 +90,7 @@ func (s HttpService) ProfilesIngest(w http.ResponseWriter, req *http.Request) {
 	startTime, endTime, err := getTimeFromQuery(query)
 	if err != nil {
 		metricMonitor.IncDroppedCounter(define.RequestHttp, define.RecordProfiles)
-		err = errors.Wrap(err, "failed to parse start or end time")
-		logger.Error(err)
+		logger.Warnf("failed to parse startTime or endTime: %v", err)
 		receiver.WriteErrResponse(w, define.ContentTypeJson, http.StatusBadRequest, err)
 		return
 	}
@@ -108,7 +106,7 @@ func (s HttpService) ProfilesIngest(w http.ResponseWriter, req *http.Request) {
 	if format == "" {
 		metricMonitor.IncDroppedCounter(define.RequestHttp, define.RecordProfiles)
 		err = errors.Errorf("spyName '%s' is not supported", spyName)
-		logger.Error(err)
+		logger.Warn(err)
 		receiver.WriteErrResponse(w, define.ContentTypeJson, http.StatusBadRequest, err)
 		return
 	}
@@ -116,8 +114,7 @@ func (s HttpService) ProfilesIngest(w http.ResponseWriter, req *http.Request) {
 	token := define.TokenFromHttpRequest(req)
 	if token == "" {
 		metricMonitor.IncDroppedCounter(define.RequestHttp, define.RecordProfiles)
-		err = errors.Errorf("failed to get profiles token, ip=%s", ip)
-		logger.Error(err)
+		logger.Warnf("failed to get profiles token, ip=%s, err: %v", ip, err)
 		receiver.WriteErrResponse(w, define.ContentTypeJson, http.StatusBadRequest, err)
 		return
 	}
@@ -125,8 +122,7 @@ func (s HttpService) ProfilesIngest(w http.ResponseWriter, req *http.Request) {
 	f, err := parseForm(req, buf.Bytes())
 	if err != nil {
 		metricMonitor.IncInternalErrorCounter(define.RequestHttp, define.RecordProfiles)
-		err = errors.Wrapf(err, "failed to parse boundary, token=%s", token)
-		logger.Error(err)
+		logger.Warnf("failed to parse boundary, token=%s, err: %v", token, err)
 		receiver.WriteErrResponse(w, define.ContentTypeJson, http.StatusBadRequest, err)
 		return
 	}
@@ -138,8 +134,7 @@ func (s HttpService) ProfilesIngest(w http.ResponseWriter, req *http.Request) {
 	origin, err := convertToOrigin(spyName, f)
 	if err != nil {
 		metricMonitor.IncDroppedCounter(define.RequestHttp, define.RecordProfiles)
-		err = errors.Wrapf(err, "read profile failed, ip=%s, token=%s", ip, token)
-		logger.Error(err)
+		logger.Warnf("read profile failed, ip=%s, token=%s, err: %v", ip, token, err)
 		receiver.WriteErrResponse(w, define.ContentTypeJson, http.StatusBadRequest, err)
 		return
 	}
