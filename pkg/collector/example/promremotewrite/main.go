@@ -12,6 +12,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -63,7 +64,18 @@ func sendRequest(wr *prompb.WriteRequest) error {
 		log.Printf("count(%d): token from [Bearer Auth]\n", total)
 	}
 
-	_, err = http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	log.Printf("status: %d, response => %s\n", resp.StatusCode, string(b))
+
 	return err
 }
 
@@ -103,7 +115,7 @@ func makeRequest() *prompb.WriteRequest {
 }
 
 func main() {
-	ticker := time.NewTicker(time.Second * 5)
+	ticker := time.NewTicker(time.Second * 3)
 	defer ticker.Stop()
 
 	sigCh := make(chan os.Signal, 1)
