@@ -122,7 +122,7 @@ func decodeThriftHTTPBody(bs []byte, ctype string) (ptrace.Traces, int, error) {
 
 	traces, err := newThriftV1Encoder().UnmarshalTraces(bs)
 	if err != nil {
-		return ptrace.Traces{}, http.StatusBadRequest, errors.Errorf("unable to process request body: %v", err)
+		return ptrace.Traces{}, http.StatusBadRequest, errors.Wrap(err, "unmarshal request body failed")
 	}
 
 	return traces, http.StatusOK, nil
