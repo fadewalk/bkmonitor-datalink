@@ -11,7 +11,6 @@ package skywalking
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -85,7 +84,7 @@ func Ready() {
 func extractMetadata(s string) (token, serviceInstance string, err error) {
 	parts := strings.SplitN(s, splitKey, 2) // token 不会携带 splitKey
 	if len(parts) != 2 {
-		return "", "", fmt.Errorf("skywalking: invalid metadata '%s'", s)
+		return "", "", errors.Errorf("skywalking: invalid metadata '%s'", s)
 	}
 	token, serviceInstance = parts[0], parts[1]
 	return token, serviceInstance, nil

@@ -30,7 +30,6 @@ const (
 	routeFtaEventSlash = "/fta/v1/event/"
 
 	tokenParamsKey = "token"
-	statusError    = "error"
 )
 
 func init() {
@@ -59,14 +58,12 @@ type HttpService struct {
 	pipeline.Validator
 }
 
-type response struct {
-	Status string `json:"status"`
-	Error  string `json:"error"`
-}
-
-func (s HttpService) getResponse(status, err string) []byte {
-	bs, _ := json.Marshal(response{Status: status, Error: err})
-	return bs
+func errResponse(err error) []byte {
+	b, _ := json.Marshal(map[string]string{
+		"status": "error",
+		"error":  err.Error(),
+	})
+	return b
 }
 
 var httpSvc HttpService
@@ -85,8 +82,7 @@ func (s HttpService) ExportEvent(w http.ResponseWriter, req *http.Request) {
 
 	if token == "" {
 		metricMonitor.IncDroppedCounter(define.RequestHttp, define.RecordFta)
-		resp := s.getResponse(statusError, "token is empty")
-		receiver.WriteResponse(w, define.ContentTypeJson, http.StatusForbidden, resp)
+		receiver.WriteResponse(w, define.ContentTypeJson, http.StatusForbidden, errResponse(errors.New("empty token")))
 		return
 	}
 
@@ -94,8 +90,7 @@ func (s HttpService) ExportEvent(w http.ResponseWriter, req *http.Request) {
 	buf, err := io.ReadAll(req.Body)
 	if err != nil {
 		metricMonitor.IncDroppedCounter(define.RequestHttp, define.RecordFta)
-		resp := s.getResponse(statusError, err.Error())
-		receiver.WriteResponse(w, define.ContentTypeJson, http.StatusBadRequest, resp)
+		receiver.WriteResponse(w, define.ContentTypeJson, http.StatusBadRequest, errResponse(err))
 		return
 	}
 
@@ -104,8 +99,7 @@ func (s HttpService) ExportEvent(w http.ResponseWriter, req *http.Request) {
 	err = json.Unmarshal(buf, &data)
 	if err != nil {
 		metricMonitor.IncDroppedCounter(define.RequestHttp, define.RecordFta)
-		resp := s.getResponse(statusError, err.Error())
-		receiver.WriteResponse(w, define.ContentTypeJson, http.StatusBadRequest, resp)
+		receiver.WriteResponse(w, define.ContentTypeJson, http.StatusBadRequest, errResponse(err))
 		return
 	}
 
@@ -150,8 +144,7 @@ func (s HttpService) ExportEvent(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		err = errors.Wrapf(err, "run pre-check failed, rtype=fta, code=%d, ip=%s", code, ip)
 		metricMonitor.IncPreCheckFailedCounter(define.RequestHttp, define.RecordFta, processorName, r.Token.Original, code)
-		resp := s.getResponse(statusError, err.Error())
-		receiver.WriteResponse(w, define.ContentTypeJson, int(code), resp)
+		receiver.WriteResponse(w, define.ContentTypeJson, int(code), errResponse(err))
 		return
 	}
 
