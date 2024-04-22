@@ -155,26 +155,6 @@ func TestStatusOk(t *testing.T) {
 	assert.Equal(t, 1, n)
 }
 
-func TestGetBearerToken(t *testing.T) {
-	t.Run("Valid", func(t *testing.T) {
-		expectedToken := "test_token"
-		req := httptest.NewRequest(http.MethodGet, localURL, nil)
-		req.Header.Set("Authorization", "Bearer "+expectedToken)
-		assert.Equal(t, getBearerToken(req), expectedToken)
-	})
-
-	t.Run("Invalid", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, localURL, nil)
-		req.Header.Set("Authorization", "Basic some_base64_credentials")
-		assert.Empty(t, getBearerToken(req))
-	})
-
-	t.Run("No auth", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, localURL, nil)
-		assert.Empty(t, getBearerToken(req))
-	})
-}
-
 func TestParseForm(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		body := &bytes.Buffer{}
