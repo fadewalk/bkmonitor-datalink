@@ -274,10 +274,16 @@ func TokenFromHttpRequest(req *http.Request) string {
 		token = req.URL.Query().Get(KeyTenantID)
 	}
 
-	// 3）从 basicauth 中读取（当且 username 为 bkmonitor 才生效
+	// 3）从 basicauth 中读取（当且仅当 username 为 bkmonitor 才生效
 	username, password, ok := req.BasicAuth()
 	if ok && username == basicAuthUsername && password != "" {
 		token = password
+	}
+
+	// 4）从 bearerauth 中读取 token
+	bearer := strings.Split(req.Header.Get("Authorization"), "Bearer ")
+	if len(bearer) == 2 {
+		token = bearer[1]
 	}
 	return token
 }

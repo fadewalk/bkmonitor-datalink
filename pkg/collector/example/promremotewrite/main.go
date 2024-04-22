@@ -11,6 +11,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -28,6 +29,8 @@ const (
 	endpoint = "http://localhost:4318/prometheus/write"
 )
 
+var total int
+
 func sendRequest(wr *prompb.WriteRequest) error {
 	data, err := proto.Marshal(wr)
 	if err != nil {
@@ -44,7 +47,21 @@ func sendRequest(wr *prompb.WriteRequest) error {
 	req.Header.Add("Content-Encoding", "snappy")
 	req.Header.Set("Content-Type", "application/x-protobuf")
 	req.Header.Set("X-Prometheus-Remote-Write-Version", "0.1.0")
-	req.Header.Set("X-BK-TOKEN", "Ymtia2JrYmtia2JrYmtiaxUtdLzrldhHtlcjc1Cwfo1u99rVk5HGe8EjT761brGtKm3H4Ran78rWl85HwzfRgw==")
+
+	const token = "Ymtia2JrYmtia2JrYmtiaxUtdLzrldhHtlcjc1Cwfo1u99rVk5HGe8EjT761brGtKm3H4Ran78rWl85HwzfRgw=="
+
+	total++
+	switch {
+	case total%3 == 0:
+		req.Header.Set("X-BK-TOKEN", token)
+		log.Printf("count(%d): token from [X-BK-TOKEN] header\n", total)
+	case total%2 == 0:
+		req.SetBasicAuth("bkmonitor", token)
+		log.Printf("count(%d): token from [Basic Auth]\n", total)
+	default:
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+		log.Printf("count(%d): token from [Bearer Auth]\n", total)
+	}
 
 	_, err = http.DefaultClient.Do(req)
 	return err
@@ -99,7 +116,6 @@ func main() {
 				log.Printf("failed to send request: %v\n", err)
 				continue
 			}
-			log.Println("push records to the server")
 
 		case <-sigCh:
 			return

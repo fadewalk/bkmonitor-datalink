@@ -85,7 +85,7 @@ func (s HttpService) JaegerTraces(w http.ResponseWriter, req *http.Request) {
 		err = errors.Wrapf(err, "failed to parse jaeger exported content, ip=%v", ip)
 		logger.Warn(err)
 		metricMonitor.IncDroppedCounter(define.RequestHttp, define.RecordTraces)
-		receiver.WriteResponse(w, define.ContentTypeJson, httpCode, []byte(err.Error()))
+		receiver.WriteErrResponse(w, define.ContentTypeJson, httpCode, err)
 		return
 	}
 
@@ -102,7 +102,7 @@ func (s HttpService) JaegerTraces(w http.ResponseWriter, req *http.Request) {
 		err = errors.Wrapf(err, "run pre-check failed, rtype=traces, code=%d, ip=%s", code, ip)
 		logger.WarnRate(time.Minute, r.Token.Original, err)
 		metricMonitor.IncPreCheckFailedCounter(define.RequestHttp, define.RecordTraces, processorName, r.Token.Original, code)
-		receiver.WriteResponse(w, define.ContentTypeJson, int(code), []byte(err.Error()))
+		receiver.WriteErrResponse(w, define.ContentTypeJson, int(code), err)
 		return
 	}
 
